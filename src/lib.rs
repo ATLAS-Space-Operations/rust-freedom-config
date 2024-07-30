@@ -3,7 +3,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use url::Url;
 
 /// A wrapper around T which implements debug and display, without showing the underlying value.
