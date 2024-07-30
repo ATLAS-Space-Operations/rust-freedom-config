@@ -251,6 +251,15 @@ impl Config {
         ConfigBuilder::new()
     }
 
+    /// Build the entire configuration from environment variables
+    pub fn from_env() -> Result<Self, Error> {
+        Self::builder()
+            .environment_from_env()?
+            .key_from_env()?
+            .secret_from_env()?
+            .build()
+    }
+
     /// Construct the Config from the environment, key, and secret
     ///
     /// # Example
