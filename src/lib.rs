@@ -119,6 +119,14 @@ pub struct Config {
     secret: Secret<String>,
 }
 
+impl PartialEq for Config {
+    fn eq(&self, other: &Self) -> bool {
+        self.environment_str() == other.environment_str()
+            && self.key == other.key
+            && self.secret == other.secret
+    }
+}
+
 /// Error enumeration for creating a Freedom Config
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, PartialOrd, Ord)]
