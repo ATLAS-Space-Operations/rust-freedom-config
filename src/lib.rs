@@ -39,7 +39,7 @@ impl<T> std::fmt::Debug for Secret<T> {
 }
 
 /// Shared behavior for atlas environments
-pub trait AtlasEnv: AsRef<str> + Debug {
+pub trait AtlasEnv: 'static + AsRef<str> + Debug + Send + Sync + Unpin {
     fn from_str(val: &str) -> Option<Self>
     where
         Self: Sized;
@@ -186,7 +186,7 @@ impl ConfigBuilder {
     }
 
     /// Set the environment
-    pub fn environment(&mut self, environment: impl AtlasEnv + 'static) -> &mut Self {
+    pub fn environment(&mut self, environment: impl AtlasEnv) -> &mut Self {
         self.environment = Some(Arc::new(environment));
         self
     }
@@ -269,7 +269,7 @@ impl Config {
     /// let config = Config::new(Test, "my_key", "my_secret");
     /// ```
     pub fn new(
-        environment: impl AtlasEnv + 'static,
+        environment: impl AtlasEnv,
         key: impl Into<String>,
         secret: impl Into<String>,
     ) -> Self {
@@ -292,7 +292,7 @@ impl Config {
     /// config.set_environment(Prod);
     /// assert_eq!(config.environment_str(), "prod");
     /// ```
-    pub fn set_environment(&mut self, environment: impl AtlasEnv + 'static) {
+    pub fn set_environment(&mut self, environment: impl AtlasEnv) {
         self.environment = Arc::new(environment);
     }
 
