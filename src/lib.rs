@@ -354,3 +354,16 @@ impl Config {
         self.secret = Secret(secret.into());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[allow(unused)]
+    fn config_is_send() {
+        fn is_send<T: Send>(_foo: T) {}
+
+        let config = Config::from_env().unwrap();
+        is_send(config);
+    }
+}
