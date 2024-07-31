@@ -78,7 +78,7 @@ impl AtlasEnv for Test {
     }
 
     fn freedom_entrypoint(&self) -> Url {
-        Url::parse("https://test-api.atlasground.com/api").unwrap()
+        Url::parse("https://test-api.atlasground.com/api/").unwrap()
     }
 }
 
@@ -105,7 +105,7 @@ impl AtlasEnv for Prod {
     }
 
     fn freedom_entrypoint(&self) -> Url {
-        Url::parse("https://api.atlasground.com/api").unwrap()
+        Url::parse("https://api.atlasground.com/api/").unwrap()
     }
 }
 
