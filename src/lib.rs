@@ -22,6 +22,22 @@ impl Default for Environment {
     }
 }
 
+pub trait IntoEnvironment {
+    fn into(self) -> Environment;
+}
+
+impl<T: AtlasEnv> IntoEnvironment for T {
+    fn into(self) -> Environment {
+        Environment::new(self)
+    }
+}
+
+impl IntoEnvironment for Environment {
+    fn into(self) -> Environment {
+        self
+    }
+}
+
 // NOTE: I can't really think of a reason we'd need DerefMut. Once we construct an environment
 // It shouldn't change during runtime.
 impl std::ops::Deref for Environment {
@@ -237,8 +253,8 @@ impl ConfigBuilder {
     }
 
     /// Set the environment
-    pub fn environment(&mut self, environment: impl AtlasEnv) -> &mut Self {
-        self.environment = Some(Environment::new(environment));
+    pub fn environment(&mut self, environment: impl IntoEnvironment) -> &mut Self {
+        self.environment = Some(environment.into());
         self
     }
 
