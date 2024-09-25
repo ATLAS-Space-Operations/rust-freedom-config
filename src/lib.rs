@@ -6,6 +6,49 @@ use std::{fmt::Debug, sync::Arc};
 use serde::Deserialize;
 use url::Url;
 
+/// The ATLAS Environment
+#[derive(Debug, Clone)]
+pub struct Environment(Arc<dyn AtlasEnv>);
+
+impl std::fmt::Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.0.as_ref().as_ref())
+    }
+}
+
+impl Default for Environment {
+    fn default() -> Self {
+        Self::test()
+    }
+}
+
+// NOTE: I can't really think of a reason we'd need DerefMut. Once we construct an environment
+// It shouldn't change during runtime.
+impl std::ops::Deref for Environment {
+    type Target = dyn AtlasEnv;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
+    }
+}
+
+impl Environment {
+    /// Construct an ATLAS environment
+    pub fn new<E: AtlasEnv>(env: E) -> Self {
+        Self(Arc::new(env))
+    }
+
+    /// Construct an ATLAS environment object for the test environment
+    pub fn test() -> Self {
+        Self::new(Test)
+    }
+
+    /// Construct an ATLAS environment object for the production environment
+    pub fn prod() -> Self {
+        Self::new(Prod)
+    }
+}
+
 /// A wrapper around T which implements debug and display, without showing the underlying value.
 ///
 /// This is intended to wrap sensitive information, and prevent it from being accidentally logged,
@@ -114,7 +157,7 @@ impl AtlasEnv for Prod {
 /// Used when creating a Freedom API client
 #[derive(Clone, Debug)]
 pub struct Config {
-    environment: Arc<dyn AtlasEnv>,
+    environment: Environment,
     key: String,
     secret: Secret<String>,
 }
@@ -152,7 +195,7 @@ impl std::error::Error for Error {}
 /// Builder for the Freedom Config object
 #[derive(Default)]
 pub struct ConfigBuilder {
-    environment: Option<Arc<dyn AtlasEnv>>,
+    environment: Option<Environment>,
     key: Option<String>,
     secret: Option<Secret<String>>,
 }
@@ -195,7 +238,7 @@ impl ConfigBuilder {
 
     /// Set the environment
     pub fn environment(&mut self, environment: impl AtlasEnv) -> &mut Self {
-        self.environment = Some(Arc::new(environment));
+        self.environment = Some(Environment::new(environment));
         self
     }
 
@@ -281,7 +324,7 @@ impl Config {
         key: impl Into<String>,
         secret: impl Into<String>,
     ) -> Self {
-        let environment = Arc::new(environment);
+        let environment = Environment::new(environment);
 
         Self {
             environment,
@@ -301,17 +344,17 @@ impl Config {
     /// assert_eq!(config.environment_str(), "prod");
     /// ```
     pub fn set_environment(&mut self, environment: impl AtlasEnv) {
-        self.environment = Arc::new(environment);
+        self.environment = Environment::new(environment);
     }
 
     /// Return the trait object representing an ATLAS environment
-    pub fn environment(&self) -> &dyn AtlasEnv {
-        self.environment.as_ref()
+    pub fn environment(&self) -> &Environment {
+        &self.environment
     }
 
     /// Return the string representation of the environment
     pub fn environment_str(&self) -> &str {
-        self.environment.as_ref().as_ref()
+        self.environment.as_ref()
     }
 
     /// Exposes the secret as a string slice.
