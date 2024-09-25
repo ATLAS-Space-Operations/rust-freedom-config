@@ -6,6 +6,7 @@ authors = ["Caleb Leinz <caleb.leinz@atlasspace.com>"]
 description = "ATLAS Freedom Configuration"
 readme = "README.md"
 repository = "https://github.com/ATLAS-Space-Operations/rust-freedom-config"
+publish = ["atlasspace-rust"]
 
 [dependencies]
 url = { version = "2.5.0" }
