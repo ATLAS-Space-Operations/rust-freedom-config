@@ -1,5 +1,8 @@
 # Freedom Config
 
+[![Crates.io](https://img.shields.io/crates/v/freedom-config.svg)](https://crates.io/crates/freedom-config)
+[![Documentation](https://docs.rs/freedom-config/badge.svg)](https://docs.rs/freedom-config/)
+
 Utilities for creating an ATLAS Freedom configuration
 
 ## Usage
