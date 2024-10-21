@@ -8,7 +8,7 @@ use url::Url;
 
 /// The ATLAS Environment
 #[derive(Debug, Clone)]
-pub struct Environment(Arc<dyn AtlasEnv>);
+pub struct Environment(Arc<dyn Env>);
 
 impl std::fmt::Display for Environment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -22,17 +22,17 @@ impl Default for Environment {
     }
 }
 
-pub trait IntoEnvironment {
+pub trait IntoEnv {
     fn into(self) -> Environment;
 }
 
-impl<T: AtlasEnv> IntoEnvironment for T {
+impl<T: Env> IntoEnv for T {
     fn into(self) -> Environment {
         Environment::new(self)
     }
 }
 
-impl IntoEnvironment for Environment {
+impl IntoEnv for Environment {
     fn into(self) -> Environment {
         self
     }
@@ -41,7 +41,7 @@ impl IntoEnvironment for Environment {
 // NOTE: I can't really think of a reason we'd need DerefMut. Once we construct an environment
 // It shouldn't change during runtime.
 impl std::ops::Deref for Environment {
-    type Target = dyn AtlasEnv;
+    type Target = dyn Env;
 
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
@@ -50,7 +50,7 @@ impl std::ops::Deref for Environment {
 
 impl Environment {
     /// Construct an ATLAS environment
-    pub fn new<E: AtlasEnv>(env: E) -> Self {
+    pub fn new<E: Env>(env: E) -> Self {
         Self(Arc::new(env))
     }
 
@@ -98,7 +98,7 @@ impl<T> std::fmt::Debug for Secret<T> {
 }
 
 /// Shared behavior for atlas environments
-pub trait AtlasEnv: 'static + AsRef<str> + Debug + Send + Sync + Unpin {
+pub trait Env: 'static + AsRef<str> + Debug + Send + Sync + Unpin {
     fn from_str(val: &str) -> Option<Self>
     where
         Self: Sized;
@@ -124,7 +124,7 @@ impl AsRef<str> for Test {
     }
 }
 
-impl AtlasEnv for Test {
+impl Env for Test {
     fn from_str(val: &str) -> Option<Self>
     where
         Self: Sized,
@@ -151,7 +151,7 @@ impl AsRef<str> for Prod {
     }
 }
 
-impl AtlasEnv for Prod {
+impl Env for Prod {
     fn from_str(val: &str) -> Option<Self>
     where
         Self: Sized,
@@ -253,7 +253,7 @@ impl ConfigBuilder {
     }
 
     /// Set the environment
-    pub fn environment(&mut self, environment: impl IntoEnvironment) -> &mut Self {
+    pub fn environment(&mut self, environment: impl IntoEnv) -> &mut Self {
         self.environment = Some(environment.into());
         self
     }
@@ -335,11 +335,7 @@ impl Config {
     /// # use freedom_config::{Config, Test};
     /// let config = Config::new(Test, "my_key", "my_secret");
     /// ```
-    pub fn new(
-        environment: impl AtlasEnv,
-        key: impl Into<String>,
-        secret: impl Into<String>,
-    ) -> Self {
+    pub fn new(environment: impl Env, key: impl Into<String>, secret: impl Into<String>) -> Self {
         let environment = Environment::new(environment);
 
         Self {
@@ -359,7 +355,7 @@ impl Config {
     /// config.set_environment(Prod);
     /// assert_eq!(config.environment_str(), "prod");
     /// ```
-    pub fn set_environment(&mut self, environment: impl AtlasEnv) {
+    pub fn set_environment(&mut self, environment: impl Env) {
         self.environment = Environment::new(environment);
     }
 
