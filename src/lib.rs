@@ -2,9 +2,10 @@
 
 use std::{fmt::Debug, sync::Arc};
 
-#[cfg(feature = "serde")]
-use serde::Deserialize;
 use url::Url;
+
+#[cfg(feature = "serde")]
+mod ser;
 
 /// The ATLAS Environment
 #[derive(Debug, Clone)]
@@ -69,7 +70,11 @@ impl Environment {
 ///
 /// This is intended to wrap sensitive information, and prevent it from being accidentally logged,
 /// or otherwise exposed
-#[cfg_attr(feature = "serde", derive(Deserialize), serde(transparent))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Secret<T>(pub T);
 
@@ -172,6 +177,7 @@ impl Env for Prod {
 ///
 /// Used when creating a Freedom API client
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Config {
     environment: Environment,
     key: String,
@@ -420,5 +426,56 @@ mod tests {
 
         let config = Config::from_env().unwrap();
         is_send(config);
+    }
+
+    #[cfg(feature = "serde")]
+    mod serde {
+        use super::*;
+
+        #[test]
+        fn deserialize_config() {
+            let json = r#"{"key": "foo", "secret": "bar", "environment": "tEsT"}"#;
+            let config: Config = serde_json::from_str(json).unwrap();
+            assert_eq!(config.key(), "foo");
+            assert_eq!(config.expose_secret(), "bar");
+            assert_eq!(config.environment_str(), "test");
+        }
+
+        #[test]
+        fn serialize_config() {
+            let config = Config::builder()
+                .key("foo")
+                .secret("bar")
+                .environment(Test)
+                .build()
+                .unwrap();
+            let value = serde_json::to_value(&config).unwrap();
+            assert_eq!(value.get("key").unwrap().as_str().unwrap(), "foo");
+            assert_eq!(value.get("secret").unwrap().as_str().unwrap(), "bar");
+            assert_eq!(value.get("environment").unwrap().as_str().unwrap(), "test");
+        }
+
+        #[test]
+        fn deserialize_config_prod() {
+            let json = r#"{"key": "foo", "secret": "bar", "environment": "prod"}"#;
+            let config: Config = serde_json::from_str(json).unwrap();
+            assert_eq!(config.key(), "foo");
+            assert_eq!(config.expose_secret(), "bar");
+            assert_eq!(config.environment_str(), "prod");
+        }
+
+        #[test]
+        fn serialize_config_prod() {
+            let config = Config::builder()
+                .key("foo")
+                .secret("bar")
+                .environment(Prod)
+                .build()
+                .unwrap();
+            let value = serde_json::to_value(&config).unwrap();
+            assert_eq!(value.get("key").unwrap().as_str().unwrap(), "foo");
+            assert_eq!(value.get("secret").unwrap().as_str().unwrap(), "bar");
+            assert_eq!(value.get("environment").unwrap().as_str().unwrap(), "prod");
+        }
     }
 }

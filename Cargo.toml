@@ -14,5 +14,8 @@ url = { version = "2.5.0" }
 # Optional dependencies
 serde = { version = "1.0.195", features = ["derive"], optional = true }
 
+[dev-dependencies]
+serde_json = { version = "1.0.140" }
+
 [features]
 serde = ["dep:serde"]
