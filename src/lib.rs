@@ -27,7 +27,7 @@ pub trait IntoEnv {
     fn into(self) -> Environment;
 }
 
-impl<T: Env> IntoEnv for T {
+impl<T: Env + 'static> IntoEnv for T {
     fn into(self) -> Environment {
         Environment::new(self)
     }
@@ -51,7 +51,7 @@ impl std::ops::Deref for Environment {
 
 impl Environment {
     /// Construct an ATLAS environment
-    pub fn new<E: Env>(env: E) -> Self {
+    pub fn new<E: Env + 'static>(env: E) -> Self {
         Self(Arc::new(env))
     }
 
@@ -103,7 +103,7 @@ impl<T> std::fmt::Debug for Secret<T> {
 }
 
 /// Shared behavior for atlas environments
-pub trait Env: 'static + AsRef<str> + Debug + Send + Sync + Unpin {
+pub trait Env: AsRef<str> + Debug + Send + Sync + Unpin {
     fn from_str(val: &str) -> Option<Self>
     where
         Self: Sized;
@@ -341,7 +341,11 @@ impl Config {
     /// # use freedom_config::{Config, Test};
     /// let config = Config::new(Test, "my_key", "my_secret");
     /// ```
-    pub fn new(environment: impl Env, key: impl Into<String>, secret: impl Into<String>) -> Self {
+    pub fn new(
+        environment: impl Env + 'static,
+        key: impl Into<String>,
+        secret: impl Into<String>,
+    ) -> Self {
         let environment = Environment::new(environment);
 
         Self {
@@ -361,7 +365,7 @@ impl Config {
     /// config.set_environment(Prod);
     /// assert_eq!(config.environment_str(), "prod");
     /// ```
-    pub fn set_environment(&mut self, environment: impl Env) {
+    pub fn set_environment(&mut self, environment: impl Env + 'static) {
         self.environment = Environment::new(environment);
     }
 

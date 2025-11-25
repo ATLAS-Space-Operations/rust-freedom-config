@@ -53,7 +53,5 @@ config entirely from environment variables
 ```rust
 use freedom_config::Config;
 
-fn main() {
-    let config = Config::from_env();
-}
+let config = Config::from_env();
 ```
